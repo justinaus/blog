@@ -5,7 +5,6 @@ module.exports = {
     node: true,
   },
   extends: [
-    'mantine',
     'next/core-web-vitals', // next strict.
     'plugin:prettier/recommended', // https://github.com/prettier/eslint-plugin-prettier#recommended-configuration
     'plugin:@typescript-eslint/recommended',
