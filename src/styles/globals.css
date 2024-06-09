@@ -26,3 +26,12 @@
 .markdown-body h2 {
   border-bottom: 1px solid hsla(210,18%,87%,1);
 }
+
+.markdown-body :not(pre) > code {
+  padding: .2em .4em;
+  margin: 0;
+  font-size: 85%;
+  white-space: break-spaces;
+  background-color: rgba(175,184,193,0.2);
+  border-radius: 6px;
+}
