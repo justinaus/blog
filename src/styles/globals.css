@@ -1,2 +1,8 @@
 @import 'reset.css';
 @import 'github-markdown.css';
+
+/* reset */
+hr {
+  margin-block-start: 0;
+  margin-block-end: 0;
+}
