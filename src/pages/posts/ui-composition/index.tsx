@@ -5,7 +5,7 @@ import MdxContent from './content.mdx';
 
 export default function UiComposition() {
   return (
-    <PostPageLayout>
+    <PostPageLayout date="2023-10-03">
       <MdxLayout>
         <MdxContent />
       </MdxLayout>

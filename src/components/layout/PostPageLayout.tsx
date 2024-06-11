@@ -1,8 +1,21 @@
-import { AppShell, Burger } from '@mantine/core';
+import { AppShell, Burger, Stack, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { format } from 'date-fns';
+import { useMemo } from 'react';
 
-export default function PostPageLayout({ children }: React.PropsWithChildren) {
+type Props = {
+  date: string; // '2023-10-03', '2023-10-03T00:00:00.000Z'
+};
+
+export default function PostPageLayout({
+  date,
+  children,
+}: React.PropsWithChildren<Props>) {
   const [opened, { toggle }] = useDisclosure();
+
+  const dateText = useMemo(() => {
+    return format(new Date(date), 'MMMM dd, yyyy');
+  }, [date]);
 
   return (
     <AppShell
@@ -19,7 +32,12 @@ export default function PostPageLayout({ children }: React.PropsWithChildren) {
         <div>Logo</div>
       </AppShell.Header>
       <AppShell.Navbar p="md">Navbar</AppShell.Navbar>
-      <AppShell.Main>{children}</AppShell.Main>
+      <AppShell.Main>
+        <Stack gap="xl">
+          <Text>{dateText}</Text>
+          {children}
+        </Stack>
+      </AppShell.Main>
     </AppShell>
   );
 }
