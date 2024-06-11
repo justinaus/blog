@@ -41,7 +41,7 @@ import { Stack, Flex, Divider } from '@mantine/core'
 </div>
 
 
-우리가 원하는 것은 그런 것이 아닐 것입니다. 우리는 divider가 카드의 전체 너비에 걸쳐 있고 각 섹션이 동일하게 패딩되기를 원합니다. 약간 엉뚱한 CSS를 사용해 볼 수도 있습니다. 만약 제가 이 컴포넌트가 있는 코드베이스에서 작업했다면 다음과 같은 것을 보고도 놀라지 않았을 것입니다:
+우리가 원하는 것은 그런 것이 아닐 것입니다. 우리는 divider가 카드의 전체 너비에 걸쳐 있고 각 섹션이 동일하게 패딩되기를 원합니다. 약간 hacky한 CSS를 사용해 볼 수도 있습니다. 만약 제가 이 컴포넌트가 있는 코드베이스에서 작업했다면 다음과 같은 것을 보고도 놀라지 않았을 것입니다:
 
 
 
@@ -58,7 +58,7 @@ import { Stack, Flex, Divider } from '@mantine/core'
 }
 ```
 
-이 방법은 동작은 하겠지만, 가장 강력한 해결책은 아닙니다. 다시 앞으로 나아가기 위해서는 엉터리 CSS를 작성하는 대신 한 발짝 물러서야 합니다. 컴포지션은 이를 위해 도움이 될 것입니다.
+이 방법은 동작은 하겠지만, 가장 강력한 해결책은 아닙니다. 다시 앞으로 나아가기 위해서는 hacky CSS를 작성하는 대신 한 발짝 물러서야 합니다. 컴포지션은 이를 위해 도움이 될 것입니다.
 
 분명하지 않을 수도 있지만 `Card`에는 **너무 많은 책임**이 있습니다. 클래스, 객체 및 함수가 너무 많은 일을 할 수 있는 것처럼 요소의 스타일도 마찬가지입니다.
 
@@ -125,3 +125,87 @@ Card.Divider = function Divider() {
     </Card.Wrap>
   </Flex>
 </div>
+
+바로 여기서 `Card`에 과부하가 걸린 것을 인식하고 이를 분리하는 작업이 바로 컴포넌트 기반 디자인 시스템을 구축하는 작업입니다. 이것이 바로 이러한 구성 요소를 견고하고 유연하게 만드는 방법입니다.
+
+이를 좀 더 개선하기 위해 두 가지 단계를 수행할 수 있습니다. 원래의 `Card` 컴포넌트를 복합 컴포넌트의 정상적인 디폴트 구성으로 만들어 봅시다:
+
+```jsx
+function Card({ children }) {
+  return (
+    <Card.Wrap>
+      <Card.Section>{children}</Card.Section>
+    </Card.Wrap>
+  )
+}
+```
+
+이렇게 하면 가장 간단한 `Card`가 필요할 때 바로 사용할 수 있습니다.
+
+이를 개선할 수 있는 두 번째 방법은 컨텍스트를 사용하여 `Card.Wrap` 외부에서 `Card.Section` 또는 `Card.Divider`를 사용하는 것을 오류로 만드는 것입니다.
+
+```jsx
+// Setting the default to false will let us trigger our Error if necessary
+const CardContext = React.useContext(false)
+
+const useCardContext = () => {
+  const context = React.useContext(CardContext)
+
+  // We'll set context to true in our Provider, which will avoid this condition
+  // We don't even need to return anything from this hook because we're not
+  // using the context value anyways.
+  if (!context) {
+    throw new Error(
+      'You may only use Card compound components inside of a `Card.Wrap` component',
+    )
+  }
+}
+
+Card.Wrap = function Wrap({ children }) {
+  return (
+    // By setting the value to true, we enable our
+    // compound components to work safely
+    <CardContext.Provider value={true}>
+      <div
+        style={{
+          border: '2px solid var(--colors-offsetMore)',
+          borderRadius: 4,
+          boxShadow: '8px 8px var(--colors-accent)',
+        }}
+      >
+        {children}
+      </div>
+    </CardContext.Provider>
+  )
+}
+
+Card.Section = function Section({ children }) {
+  useCardContext()
+
+  return <div style={{ padding: '1rem' }}>{children}</div>
+}
+
+Card.Divider = function Divider() {
+  useCardContext()
+
+  return <hr />
+}
+```
+
+여기서 한 단계 더 나아가 `Section`에 context provider의 또 다른 레이어를 추가하면 `Section`이 중첩되거나 `Divider`가 `Section`에 전달되는 것을 방지할 수 있습니다.
+
+```jsx
+Card.Section = function Section({ children }) {
+  useCardContext()
+
+  return (
+    <CardContext.Provider value={false}>
+      <div style={{ padding: '1rem' }}>{children}</div>
+    </CardContext.Provider>
+  )
+}
+```
+
+이 문제가 단순한 `Card` 컴포넌트에만 영향을 미치는 것이 아니라, 스타일링 책임이 너무 많은 다른 위법 사항이 있다는 것을 여러분의 상상력이 도움이 되길 바랍니다. 가장 흔한 것 중 하나는 [exporting margins](https://mxstbr.com/thoughts/margin/)이지만 이에 대한 글은 다음 기회로 미루겠습니다.
+
+일부 UI가 원하는 방식으로 작동하는 데 어려움을 겪고 있다면, 한 발 물러서서 한 걸음 더 나아갈 수 있도록 노력하세요. 컴포넌트의 일부에 과부하가 걸리는지, 해당 책임을 분리해도 문제가 해결되지 않는지 살펴보세요.
