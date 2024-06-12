@@ -33,7 +33,7 @@ export default function PostPageLayout({
       </AppShell.Header>
       <AppShell.Navbar p="md">Navbar</AppShell.Navbar>
       <AppShell.Main>
-        <Stack gap="xl">
+        <Stack gap="xl" p={'xl'}>
           <Text>{dateText}</Text>
           {children}
         </Stack>

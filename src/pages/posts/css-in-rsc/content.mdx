@@ -1,0 +1,251 @@
+# [번역] CSS in React Server Components
+#### CSS-in-JS와 React의 미래 이해하기
+
+작년 이맘때쯤, Vercel은 Next 13.4의 안정적인 릴리스를 발표하며 *React 서버 컴포넌트* 위에 구축된 최초의 React 프레임워크가 되었습니다.
+
+![next-release-light](https://www.joshwcomeau.com/_next/image/?url=%2Fimages%2Fcss-in-rsc%2Fnext-release-light.png&w=750&q=75)
+
+이것은 중요한 일입니다! RSC(React Server Components)는 React에서 서버 전용 코드를 작성할 수 있는 공식적인 방법을 제공합니다. 이는 많은 흥미로운 새로운 문을 열어줍니다.
+
+하지만 달걀 몇 개를 깨지 않고 오믈렛을 만들 수는 없습니다. RSC는 React 작동 방식의 근본적인 변화이며, 우리가 사용하던 라이브러리와 도구 중 일부가 뒤죽박죽이 되었습니다. 😅
+
+우려스러운 점은 💅 스타일 컴포넌트 및 Emotion과 같은 가장 인기 있는 CSS-in-JS 라이브러리가 React의 새로운 비전과 완전히 호환되지 않으며, 앞으로 나아갈 명확한 경로가 없다는 것입니다.
+
+지난 몇 달 동안 저는 이 문제를 파고들어 호환성 문제에 대한 이해를 쌓고 어떤 옵션이 있는지 알아봤습니다. 지금은 전체 상황을 꽤 확실하게 파악하고 있는 것 같습니다. 또한 레이더에 포착되지 않았던 몇 가지 흥미로운 발전 사항도 발견했습니다. ✨
+
+CSS-in-JS 라이브러리를 사용하는 경우 이 블로그 게시물이 많은 혼란을 해소하고 실용적인 옵션을 제공하는 데 도움이 되기를 바랍니다.
+
+CSS-in-JS 라이브러리를 사용하지 않는 경우에도 이 블로그 포스팅이 React 서버 컴포넌트를 더 깊이 이해하는 데 도움이 될 것입니다. 여기서 다룰 많은 문제는 CSS-in-JS에만 국한되지 않습니다!
+
+<pre><code className="plain-text">
+**Just use __________.**
+
+온라인에서 이러한 논의가 있을 때 가장 흔한 제안 중 하나는 다른 CSS 도구로 전환하라는 것입니다. 결국, React 생태계에는 옵션이 부족하지 않습니다!
+
+하지만 많은 사람들에게 이것은 실용적인 제안이 아닙니다. 제 블로그와 코스 플랫폼에는 5,000개 이상의 styled-components가 있습니다. 완전히 다른 도구로 마이그레이션하는 것은 말처럼 쉬운 일이 아닙니다.
+
+그리고 솔직히 말해서 손가락만 까딱하면 완전히 다른 라이브러리로 바꿀 수 있다고 해도 그렇게 하고 싶지 않습니다. `styled` API가 정말 마음에 듭니다!
+
+이 블로그 포스트의 뒷부분에서 몇 가지 대체 CSS 라이브러리에 대해 설명하겠지만 여기서는 styled-components와 유사한 API를 가진 옵션에 초점을 맞추겠습니다.
+</code></pre>
+
+## React 서버 컴포넌트 분석
+
+호환성 문제를 이해하려면 React 서버 컴포넌트를 이해해야 합니다. 하지만 이에 대해 이야기하기 전에 *서버 사이드 렌더링*(SSR)을 이해해야 합니다.
+
+SSR은 여러 가지 전략과 구현을 포함하는 포괄적인 용어이지만 가장 일반적인 버전은 다음과 같습니다:
+
+1. 사용자가 웹 앱을 방문합니다.
+
+1. 요청은 windowless 서버 환경에서 React를 실행하는 Node.js에 의해 수신됩니다. 그러면 애플리케이션이 렌더링되고 모든 초기 UI가 포함된 완전한 형식의 HTML 문서가 생성됩니다.
+
+1. 이 HTML 문서가 사용자의 디바이스에서 로드되면, React는 서버에서 수행한 작업을 반복하면서 동일한 컴포넌트를 모두 다시 렌더링합니다. 그러나 새로운 HTML 요소를 생성하는 대신 서버에서 생성된 HTML 요소를 "채택"하는데, 이를 **하이드레이션**이라고 합니다.
+
+상호작용을 처리하려면 React가 사용자의 기기에서 실행되어야 합니다. 서버에서 생성된 HTML은 완전히 정적이며, 우리가 작성한 이벤트 핸들러(예: `onClick`)를 포함하지 않고, 우리가 지정한 참조(`ref` 속성 포함)를 캡처하지도 않습니다.
+
+**좋아요, 그런데 왜 똑같은 작업을 모두 다시 해야 할까요?** 사용자의 기기에서 React가 부팅되면 기존의 UI를 발견하게 되지만, 어떤 컴포넌트가 각 HTML 요소를 소유하고 있는지와 같은 컨텍스트는 없습니다. React는 컴포넌트 트리를 재구성하기 위해 정확히 동일한 작업을 수행하여 기존 HTML을 올바르게 연결하고 이벤트 핸들러와 레퍼런스를 올바른 요소에 연결할 수 있도록 해야 합니다. React는 서버가 중단한 부분을 따라갈 수 있도록 스스로 지도를 그려야 합니다.
+
+**이 모델에는 한 가지 큰 한계가 있습니다.** 우리가 작성하는 모든 코드는 서버와 클라이언트에서 실행됩니다. 서버에서만 렌더링되는 컴포넌트를 만들 수 있는 방법이 없습니다.
+
+데이터베이스에 데이터가 있는 풀스택 웹 애플리케이션을 구축한다고 가정해 봅시다. PHP와 같은 언어를 사용했다면 이와 같은 작업을 수행할 수 있을 것으로 기대할 수 있습니다:
+
+```jsx
+function Home() {
+  const data = db.query('SELECT * FROM SNEAKERS');
+
+  return (
+    <main>
+      {data.map(item => (
+        <Sneaker key={item.id} item={item} />
+      ))}
+    </main>
+  );
+}
+```
+
+이론적으로는 이 코드가 서버에서 정상적으로 작동할 수 있지만, 클라이언트 측 React는 데이터베이스에 액세스할 수 없기 때문에 똑같은 코드가 사용자의 기기에서 다시 실행될 수 있다는 점이 문제입니다. "이 코드는 서버에서만 실행하고 결과 데이터는 클라이언트에서 재사용하라"고 React에 지시할 방법이 없습니다.
+
+React를 기반으로 구축된 메타 프레임워크는 자체적인 해결책을 내놓았습니다. 예를 들어 Next.js에서는 이렇게 할 수 있습니다:
+
+```jsx
+
+export async function getServerSideProps() {
+  const data = await db.query('SELECT * FROM SNEAKERS');
+
+  return {
+    props: {
+      data,
+    },
+  };
+}
+
+function Home({ data }) {
+  return (
+    <main>
+      {data.map(item => (
+        <Sneaker key={item.id} item={item} />
+      ))}
+    </main>
+  );
+}
+```
+
+Next.js 팀은 "좋아, 서버와 클라이언트에서 똑같은 React 코드가 실행되어야 하지만... 서버에서만 실행되는 추가 코드를 React 외부에 추가할 수 있습니다!"라고 말했습니다.
+
+Next.js 서버가 요청을 받으면 먼저 `getServerSideProps` 함수를 호출하고, 이 함수가 반환하는 모든 것이 React 코드에 프롭으로 공급됩니다. 서버와 클라이언트에서 완전히 동일한 React 코드가 실행되므로 아무런 문제가 없습니다. 꽤 영리하지 않나요?
+
+저는 솔직히 지금도 이 접근 방식을 꽤 좋아합니다. 하지만 이 방식은 React의 한계 때문에 어쩔 수 없이 만든 임시방편 같은 느낌도 듭니다. 또한 각 경로의 맨 위에 있는 페이지 수준에서만 작동하기 때문에 원하는 곳 어디에나 `getServerSideProps` 함수를 넣을 수 없습니다.
+
+**React 서버 컴포넌트는 이 문제에 대한 보다 직관적인 해결책을 제공합니다.** RSC를 사용하면 데이터베이스 호출 및 기타 서버 전용 작업을 React 컴포넌트에서 바로 수행할 수 있습니다:
+
+```jsx
+async function Home() {
+  const data = await db.query('SELECT * FROM SNEAKERS');
+
+  return (
+    <main>
+      {data.map(item => (
+        <Sneaker key={item.id} item={item} />
+      ))}
+    </main>
+  );
+}
+```
+
+"React 서버 컴포넌트" 패러다임에서 컴포넌트는 기본적으로 *서버 컴포넌트*입니다. 서버 컴포넌트는 서버에서만 실행됩니다. 이 코드는 사용자의 기기에서 다시 실행되지 않으며, 자바스크립트 번들에 포함되지도 않습니다!
+
+이 새로운 패러다임에는 *클라이언트 컴포넌트*도 포함됩니다. 클라이언트 컴포넌트는 서버와 클라이언트 *모두*에서 실행되는 컴포넌트입니다. "전통적인"(RSC 이전) React에서 작성했던 모든 React 컴포넌트는 클라이언트 컴포넌트입니다. **오래된 것의 새로운 이름입니다.**
+
+우리는 파일 상단에 새로운 `"use client"` 지시문을 사용하여 클라이언트 컴포넌트를 선택합니다:
+
+```jsx
+'use client';
+
+function Counter() {
+  const [count, setCount] = React.useState(0);
+
+  return (
+    <button onClick={() => setCount(count + 1)}>
+      Count: {count}
+    </button>
+  );
+}
+```
+
+이 지시어는 "client boundary"를 생성합니다. 이 파일의 모든 컴포넌트와 import한 모든 컴포넌트는 클라이언트 컴포넌트로 렌더링되어 서버에서 먼저 실행되고 클라이언트에서 다시 실행됩니다.
+
+다른 React 기능(예: hooks)과 달리 React 서버 컴포넌트는 번들러와의 긴밀한 통합이 필요합니다. 2024년 4월에 이 글을 쓰는 현재, React 서버 컴포넌트를 사용하는 유일한 실용적인 방법은 Next.js를 사용하는 것이지만, 앞으로는 바뀔 것으로 예상합니다.
+
+### 서버 컴포넌트는 제한되어 있습니다.
+
+서버 컴포넌트에 대해 이해해야 할 핵심은 "완전한(full)" React 경험을 제공하지 않는다는 것입니다. 대부분의 React API는 서버 컴포넌트에서 작동하지 않습니다.
+
+예를 들어, `useState`. 상태 변수가 변경되면 컴포넌트는 다시 렌더링하지만 서버 컴포넌트는 다시 렌더링할 수 없으며 코드가 브라우저로 전송되지도 않으므로 React는 상태 변경을 처리하는 방법을 모릅니다. React의 관점에서 보면 서버 컴포넌트가 생성한 마크업은 고정되어 있으며 클라이언트에서 변경할 수 없습니다.
+
+마찬가지로, 이펙트는 서버에서 실행되지 않고 클라이언트에서 렌더링된 후에만 실행되기 때문에 서버 컴포넌트 내부에서 `useEffect`를 사용할 수 없습니다. 그리고 서버 컴포넌트는 자바스크립트 번들에서 제외되기 때문에, 클라이언트 측 React는 우리가 `useEffect` 훅을 작성했다는 사실을 전혀 알지 못합니다.
+
+서버 컴포넌트와 클라이언트 컴포넌트 모두에서 React 컨텍스트를 공유하는 방법에 대한 문제를 아직 해결하지 못했기 때문에 서버 컴포넌트 내부에서는 `useContext` 훅도 사용할 수 없습니다.
+
+**제가 생각하는 방식은 이렇습니다:** 서버 컴포넌트는 적어도 우리가 전통적으로 이해해왔던 것과는 달리 *실제로는* React 컴포넌트가 아닙니다. 서버가 원본 HTML을 생성하기 위해 렌더링하는 PHP 템플릿과 훨씬 더 비슷합니다. 진정한 혁신은 서버 컴포넌트와 클라이언트 컴포넌트가 동일한 애플리케이션에 공존할 수 있다는 것입니다!
+
+<pre><code className="plain-text">
+**더 깊이 들어가기**
+
+이 블로그 포스트에서는 CSS-in-JS 프레임워크와의 호환성 문제를 이해하기 위해 알아야 할 React Server 컴포넌트의 가장 관련성 높은 세부 사항에 초점을 맞추고자 합니다.
+
+하지만 리액트 서버 컴포넌트에 대해 더 자세히 알고 싶다면 이 새로운 세계를 훨씬 더 깊이 탐구하는 별도의 블로그 포스팅을 참고하세요:
+
+["React 서버 컴포넌트 이해하기"](https://www.joshwcomeau.com/react/server-components/)
+</code></pre>
+
+## CSS-in-JS 라이브러리 작동 방식
+
+지금까지 React 서버 컴포넌트의 기초에 대해 알아보았습니다. 이제 💅 styled-components와 같은 CSS-in-JS 라이브러리의 기본에 대해 이야기해 보겠습니다!
+
+다음은 간단한 예시입니다:
+
+```jsx
+import styled from 'styled-components';
+
+export default function Homepage() {
+  return (
+    <BigRedButton>
+      Click me!
+    </BigRedButton>
+  );
+}
+
+const BigRedButton = styled.button`
+  font-size: 2rem;
+  color: red;
+`;
+```
+
+CSS를 `.red-btn`과 같은 클래스에 넣는 대신 해당 CSS를 새로 생성된(a freshly-generated) React 컴포넌트에 연결합니다. 이것이 styled-components를 특별하게 만드는 이유입니다. 컴포넌트는 클래스가 아닌, 재사용 가능한 기본 요소입니다.
+
+`styled.button`은 새로운 React 컴포넌트를 동적으로 생성하는 함수이며 해당 컴포넌트를 `BigRedButton`이라는 변수에 할당합니다. 그런 다음 다른 React 컴포넌트를 사용하는 것과 동일한 방식으로 해당 React 컴포넌트를 사용할 수 있습니다. 큰 빨간색 텍스트가 있는 `<button>` 태그를 렌더링합니다.
+
+하지만 라이브러리는 이 요소(element)에 정확히 어떻게 이 CSS를 적용할까요? 세 가지 주요 옵션이 있습니다.
+
+1. `style` 속성을 통해 스타일을 인라인으로 적용할 수 있습니다.
+
+1. 스타일은 별도의 CSS 파일에 넣고 `<link>`를 통해 로드할 수 있습니다.
+
+1. 스타일은 일반적으로 현재 HTML 문서의 `<head>`에 있는 `<style>` 태그에 넣을 수 있습니다.
+
+이 코드를 실행하고 DOM을 검사하면, 답이 나옵니다:
+
+```html
+<html>
+  <head>
+    <style data-styled="active">
+      .abc123 {
+        font-size: 2rem;
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <button className="abc123">
+      Click me!
+    </button>
+  </body>
+</html>
+```
+
+styled-components는 제공된 스타일을 라이브러리가 관리하는 `<style>` 태그에 기록합니다. 이러한 스타일을 이 특정 `<button>`에 연결하기 위해 고유한 클래스 이름인 `"abc123"`을 생성합니다.
+
+이 모든 작업은 초기 React 렌더링 중에 먼저 발생합니다.
+
+- 클라이언트 측 렌더링 컨텍스트(예: Parcel, create-react-app)에서 `<style>` 태그는 React가 생성하는 모든 DOM 노드와 마찬가지로 사용자의 디바이스에서 동적으로 생성됩니다.
+
+- 서버 측 렌더링 컨텍스트(예: Next, Remix)에서는 이 작업이 서버에서 이루어집니다. 생성된 HTML 문서에는 이 `<style>` 태그가 포함됩니다.
+
+사용자가 애플리케이션과 상호 작용할 때 특정 스타일을 생성, 수정 또는 삭제해야 할 수 있습니다. 예를 들어 조건부로 렌더링되는 styled-component가 있다고 가정해 보겠습니다:
+
+```jsx
+function Header() {
+  const user = useUser();
+
+  return (
+    <>
+      {user && (
+        <SignOutButton onClick={user.signOut}>
+          Sign Out
+        </SignOutButton>
+      )}
+    </>
+  );
+}
+
+const SignOutButton = styled.button`
+  color: white;
+  background: red;
+`;
+```
+
+처음에 `user`가 정의되지 않은 경우 `<SignOutButton>`이 렌더링되지 않으므로 이러한 스타일이 존재하지 않습니다. 나중에 사용자가 로그인하면 애플리케이션이 다시 렌더링되고 styled-component가 시작되어 이러한 스타일을 `<style>` 태그에 삽입합니다.
+
+기본적으로 모든 styled component는 일반 React 컴포넌트이지만, **`<style>` 태그에 스타일을 렌더링한다는** 약간의 부수적인 사이드 이펙트가 있습니다.
+
+여기서는 이것이 가장 중요한 내용이지만, 라이브러리의 내부 동작에 대해 더 자세히 알고 싶다면 ["styled-component 이해하기"](https://www.joshwcomeau.com/react/demystifying-styled-components/)라는 블로그 포스팅을 읽어보시기 바랍니다.
