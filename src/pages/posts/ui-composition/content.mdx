@@ -77,11 +77,11 @@ Card.Wrap = function Wrap({ children }) {
 }
 
 Card.Section = function Section({ children }) {
-  return <div class="p-4">{children}</div>
+  return <div className="p-4">{children}</div>
 }
 
 Card.Divider = function Divider() {
-  return <hr class="border-t-2 border-t-gray-300" />
+  return <hr className="border-t-2 border-t-gray-300" />
 }
 ```
 
@@ -111,7 +111,7 @@ Card.Divider = function Divider() {
     <Card.Wrap>
       <Card.Section>
         <Stack gap={'md'}>
-          <h3 class="font-sans text-xl">This is Section 1</h3>
+          <h3 className="font-sans text-xl">This is Section 1</h3>
           <p>This is the content for Section 1</p>
         </Stack>
       </Card.Section>
