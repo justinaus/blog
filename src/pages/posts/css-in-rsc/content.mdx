@@ -9,7 +9,7 @@
 
 하지만 달걀 몇 개를 깨지 않고 오믈렛을 만들 수는 없습니다. RSC는 React 작동 방식의 근본적인 변화이며, 우리가 사용하던 라이브러리와 도구 중 일부가 뒤죽박죽이 되었습니다. 😅
 
-우려스러운 점은 💅 스타일 컴포넌트 및 Emotion과 같은 가장 인기 있는 CSS-in-JS 라이브러리가 React의 새로운 비전과 완전히 호환되지 않으며, 앞으로 나아갈 명확한 경로가 없다는 것입니다.
+우려스러운 점은 💅 styled-components 및 Emotion과 같은 가장 인기 있는 CSS-in-JS 라이브러리가 React의 새로운 비전과 완전히 호환되지 않으며, 앞으로 나아갈 명확한 경로가 없다는 것입니다.
 
 지난 몇 달 동안 저는 이 문제를 파고들어 호환성 문제에 대한 이해를 쌓고 어떤 옵션이 있는지 알아봤습니다. 지금은 전체 상황을 꽤 확실하게 파악하고 있는 것 같습니다. 또한 레이더에 포착되지 않았던 몇 가지 흥미로운 발전 사항도 발견했습니다. ✨
 
@@ -249,3 +249,269 @@ const SignOutButton = styled.button`
 기본적으로 모든 styled component는 일반 React 컴포넌트이지만, **`<style>` 태그에 스타일을 렌더링한다는** 약간의 부수적인 사이드 이펙트가 있습니다.
 
 여기서는 이것이 가장 중요한 내용이지만, 라이브러리의 내부 동작에 대해 더 자세히 알고 싶다면 ["styled-component 이해하기"](https://www.joshwcomeau.com/react/demystifying-styled-components/)라는 블로그 포스팅을 읽어보시기 바랍니다.
+
+## 문제의 핵심
+
+지금까지 배운 내용을 요약해 보겠습니다:
+
+- "React 서버 컴포넌트"는 새로운 유형의 컴포넌트인 서버 컴포넌트를 제공하는 React의 새로운 패러다임입니다. 서버 컴포넌트는 서버에서만 렌더링됩니다. 해당 코드는 JS 번들에 포함되지도 않습니다.
+
+- styled-components 라이브러리를 사용하면 CSS가 첨부된 React 컴포넌트를 동적으로 생성할 수 있습니다. 컴포넌트가 다시 렌더링될 때, 업데이트되는 `<style>` 태그를 관리하는 방식으로 작동합니다.
+
+근본적인 비호환성은 styled-components는 브라우저 내에서 실행되도록 설계된 반면, 서버 컴포넌트는 브라우저를 건드리지 않는다는 점입니다.
+
+내부적으로 styled-components는 `useContext` 훅을 많이 사용합니다. 이는 React 라이프사이클에 묶여있어야 하지만, 서버 컴포넌트에는 React 라이프사이클이 없습니다. 따라서 이 새로운 "React 서버 컴포넌트" 세계에서 styled-components를 사용하려면, styled-components를 하나라도 렌더링하는 모든 React 컴포넌트가 클라이언트 컴포넌트가 되어야 합니다.
+
+여러분은 어떤지 모르겠지만, 저는 스타일링이 전혀 포함되지 않은 React 컴포넌트를 사용하는 경우는 매우 드뭅니다. 제 컴포넌트 파일의 90% 이상이 스타일이 지정된 컴포넌트를 사용하는 것으로 추정됩니다. 이러한 컴포넌트의 대부분은 state나 다른 클라이언트 컴포넌트 기능을 사용하지 않는 완전히 정적인 컴포넌트입니다.
+
+새로운 패러다임을 충분히 활용하지 못한다는 의미이기 때문에 실망스럽지만, **그렇다고 해서 세상이 끝나는 것은 아닙니다.**
+
+React 서버 컴포넌트에서 한 가지를 바꿀 수 있다면 "클라이언트 컴포넌트"라는 이름일 것입니다. 이 이름은 이 컴포넌트가 클라이언트에서만 렌더링된다는 것을 암시하지만, 이는 사실이 아닙니다. "클라이언트 컴포넌트"는 기존 컴포넌트의 새로운 이름이라는 것을 기억하세요. 2023년 5월 이전에 만들어진 모든 React 애플리케이션의 모든 React 컴포넌트는 클라이언트 컴포넌트입니다.
+
+따라서 styled-components 애플리케이션의 컴포넌트 중 10%만 서버 컴포넌트가 될 수 있다고 해도 여전히 개선된 것입니다! 우리의 애플리케이션은 여전히 RSC 이전보다 조금 더 가볍고 빨라질 것입니다. **여전히 SSR의 모든 이점을 누릴 수 있습니다. 그 점은 변함이 없습니다.**
+
+<pre><code className="plain-text">
+**그냥 업데이트하면 안 될까요?**
+
+styled-components/Emotion의 유지 관리자가 왜 라이브러리를 React 서버 컴포넌트와 호환되도록 업데이트하지 않았는지 궁금할 수 있습니다. 1년이 넘도록 이 문제를 알고 있었는데 왜 아직 해결책을 찾지 못했을까요?
+
+styled-components 유지 관리자는 현재 React의 누락된 API로 인해 막혀 있습니다. 특히, React는 컨텍스트에 대한 RSC 친화적인 대안을 제공하지 않았고, 서버 사이드 렌더링 중에 모든 스타일을 올바르게 적용하려면 styled-components 간에 데이터를 공유할 수 있는 방법이 필요합니다.
+
+몇 주 전에 저는 [꽤 깊이 탐구해봤는데](https://github.com/joshwcomeau/dream-css-tool), 솔직히 React Context 없이 어떻게 이것이 작동할 수 있을지 상상하기 어려웠습니다. 제가 알 수 있는 유일한 해결책은 완전히 다른 접근 방식을 사용하도록 라이브러리 전체를 완전히 다시 작성하는 것입니다. 이는 상당한 변화를 초래할 뿐만 아니라 자원 봉사자들로 구성된 오픈소스 유지보수 팀에게 기대하는 것은 완전히 무리한 일입니다.
+
+더 자세히 알고 싶으시다면 [styled-components Github 이슈](https://github.com/styled-components/styled-components/issues/3856#issuecomment-1591947905)에서 블로커가 무엇인지 설명하는 글을 참조하세요. Emotion 리포지토리에서도 비슷한 논의가 있었습니다.
+</code></pre>
+
+## 제로 런타임 CSS-in-JS 라이브러리의 세계
+
+지금까지의 이야기는 다소 암울했습니다. React Server 컴포넌트와 styled-components 사이에는 근본적인 비호환성이 존재하며, 라이브러리 관리자에게는 지원을 추가하는 데 필요한 도구가 제공되지 않았기 때문입니다.
+
+**다행히도 React 커뮤니티는 이 문제에 대해 잠자고 있지 않았습니다!** styled-components와 유사한 API를 제공하지만 React Server 컴포넌트와 완벽하게 호환되는 여러 라이브러리가 개발되고 있습니다! ✨
+
+이러한 도구들은 React 라이프사이클에 얽매이지 않고 컴파일 타임에 모든 처리를 수행하는 다른 접근 방식을 취하고 있습니다.
+
+최신 React 애플리케이션에는 빌드 단계가 있는데, 이 단계에서는 TypeScript/JSX를 JavaScript로 변환하고 수천 개의 개별 파일을 몇 개의 번들로 패키징합니다. 이 작업은 애플리케이션이 프로덕션 환경에서 실행되기 전에 배포될 때 수행됩니다. **런타임이 아닌 이 단계에서 스타일이 지정된 컴포넌트를 처리하면 어떨까요?**
+
+이것이 이 섹션에서 논의할 모든 라이브러리의 핵심 아이디어입니다. 시작해 보겠습니다!
+
+### Linaria
+
+[Linaria](https://github.com/callstack/linaria)는 2017년에 만들어졌습니다. styled-components만큼이나 오래되었습니다!
+
+API는 styled-components와 동일하게 보입니다:
+
+```jsx
+import styled from '@linaria/react';
+
+export default function Homepage() {
+  return (
+    <BigRedButton>
+      Click me!
+    </BigRedButton>
+  );
+}
+
+const BigRedButton = styled.button`
+  font-size: 2rem;
+  color: red;
+`;
+```
+
+**정말 영리한 부분은 다음과 같습니다:** 컴파일 단계에서, Linaria는 이 코드를 변환하고, 모든 스타일을 [CSS Modules](https://github.com/css-modules/css-modules)로 옮깁니다.
+
+Linaria를 실행한 후 코드는 다음과 같이 표시됩니다:
+
+```css
+/* /components/Home.module.css */
+.BigRedButton {
+  font-size: 2rem;
+  color: red;
+}
+```
+
+```jsx
+/* /components/Home.js */
+import styles from './Home.module.css';
+
+export default function Homepage() {
+  return (
+    <button className={styles.BigRedButton}>
+      Click me!
+    </button>
+  );
+}
+```
+
+CSS Modules에 아직 익숙하지 않다면, 이건 그냥 CSS를 가볍게 추상화한 것입니다. 일반 CSS처럼 취급할 수 있지만 전 세계적으로 고유한 이름을 걱정할 필요는 없습니다. 컴파일 단계에서 Linaria가 마법을 부리면 `.BigRedButton`과 같은 일반적인 이름은 `.abc123`과 같은 고유한 이름으로 변환됩니다.
+
+**중요한 것은 CSS Modules가 이미 널리 지원되고 있다는 점입니다.** 가장 널리 사용되는 옵션 중 하나입니다. Next.js와 같은 메타 프레임워크는 이미 CSS Modules를 최고 수준으로 지원하고 있습니다.
+
+따라서 Linaria 팀은 처음부터 다시 시작하여 강력한 프로덕션 지원 CSS 솔루션을 구축하는 대신 지름길을 택하기로 결정했습니다. 스타일이 지정된 컴포넌트를 작성하면 Linaria가 이를 CSS Modules로 전처리한 다음 일반 CSS로 처리하는 것입니다. 이 모든 과정은 컴파일 타임에 이루어집니다.
+
+<pre><code className="plain-text">
+**런타임과 컴파일 타임의 트레이드오프**
+
+RSC가 등장하기 훨씬 전부터 커뮤니티는 Linaria 같은 컴파일 타임 라이브러리를 구축해 왔습니다. styled-components는 자바스크립트 번들에 11KB를 추가하지만, Linaria는 모든 작업이 미리 수행되기 때문에 0KB를 추가하는 등 성능상의 이점이 매우 큽니다. 또한 스타일을 수집하고 적용하는 데 시간을 소비할 필요가 없으므로 서버 측 렌더링이 조금 더 빨라집니다.
+
+그렇다고 styled-components 런타임이 쓸모없는 것은 아닙니다. 컴파일 타임에는 불가능한 작업을 styled-components에서 할 수 있습니다. 예를 들어, styled-components는 일부 React 상태가 변경될 때 CSS를 동적으로 업데이트할 수 있습니다.
+
+다행히도 styled-components가 처음 만들어진 이후 거의 10년 동안 CSS는 훨씬 더 강력해졌습니다. CSS 변수를 사용하여 대부분의 동적 사용 사례를 처리할 수 있습니다. 요즘에는 런타임을 사용하면 일부 상황에서 약간 더 나은 개발자 경험을 제공할 수 있지만, 제 생각에는 더 이상 런타임이 필요하지 않습니다.
+
+이는 Linaria 및 기타 컴파일 타임 CSS-in-JS 라이브러리가 실제로 styled-components/Emotion을 즉시 대체할 수 없음을 의미합니다. 동적 컴포넌트를 재작업하는 데 시간이 좀 걸릴 것입니다. 하지만 이는 완전히 다른 CSS 도구로 전환하는 것에 비하면 아주 작은 부분의 작업입니다.
+</code></pre>
+
+#### Migrating to Linaria
+
+그렇다면 styled-components 애플리케이션을 모두 Linaria로 마이그레이션해야 할까요?
+
+안타깝게도 문제가 있습니다. Linaria 자체는 활발하게 유지 관리되고 있지만 Next.js에 대한 공식 바인딩은 없으며, Linaria가 Next.js와 연동되도록 하는 것은 그리 간단한 일이 아닙니다.
+
+가장 인기 있는 통합인 [next-linaria](https://github.com/Mistereo/next-linaria)는 3년 동안 업데이트되지 않았으며, 앱 라우터/리액트 서버 컴포넌트와 호환되지 않습니다. 새로운 옵션인 [next-with-linaria](https://github.com/dlehmhus/next-with-linaria)가 있지만 프로덕션 환경에서 사용하지 말라는 큰 경고가 있습니다. 😅
+
+따라서 모험심이 강한 개발자에게는 옵션이 될 수 있지만, 제가 추천하고 싶은 옵션은 아닙니다.
+
+### Panda CSS
+
+[Panda CSS](https://github.com/chakra-ui/panda)는 인기 컴포넌트 라이브러리인 Chakra UI를 만든 사람들이 개발한 최신 CSS-in-JS 라이브러리입니다.
+
+Panda CSS에는 다양한 인터페이스가 제공됩니다. `mb-5`와 같은 단축(shorthand) 클래스를 지정하여 Tailwind처럼 사용할 수 있습니다. variants와 cva를 사용하여 Stitches처럼 사용할 수 있습니다. 또는 styled-components처럼 사용할 수도 있습니다.
+
+다음은 `styled` API의 모습입니다:
+
+```jsx
+import { styled } from '../styled-system/jsx'
+
+export default function Homepage() {
+  return (
+    <BigRedButton>
+      Click me!
+    </BigRedButton>
+  );
+}
+
+const BigRedButton = styled.button`
+  font-size: 2rem;
+  color: red;
+`;
+```
+
+Linaria와 마찬가지로 Panda CSS는 컴파일되지만 대신 Tailwind 스타일 유틸리티 클래스로 컴파일됩니다. 최종 결과는 다음과 같습니다.
+
+```css
+/* /styles.css */
+.font-size_2rem {
+  font-size: 2rem;
+}
+
+.color_red {
+  color: red;
+}
+```
+
+```jsx
+/* /components/Home.js */
+export default function Homepage() {
+  return (
+    <button className="font-size_2rem color_red">
+      Click me!
+    </button>
+  );
+}
+```
+
+`color: red`와 같은 모든 고유한 CSS 선언에 대해 Panda CSS는 하나의 중앙 CSS 파일에 새로운 유틸리티 클래스를 생성합니다. 그러면 이 파일은 React 애플리케이션의 모든 경로에 로드됩니다.
+
+저는 Panda CSS가 정말 마음에 듭니다. 관련 경험이 많은 탄탄한 팀에서 개발 중이고, 친숙한 API를 제공하며, 귀여운 스케이트보드 팬더 마스코트도 있습니다!
+
+하지만 실험해 본 결과 저에게는 적합하지 않다는 것을 알게 되었습니다. 몇 가지 사소하고 피상적인 문제가 있었는데, 예를 들어 Panda CSS는 프로젝트 파일을 복잡하게 만드는 많은 것들을 생성합니다. 약간 지저분하게 느껴지지만 궁극적으로 큰 문제는 아닙니다.
+
+저에게 더 큰 문제는 Panda CSS에 중요한 기능이 누락되어 있다는 것입니다. **컴포넌트를 상호 참조할 수 없다는 것입니다.**
+
+[Panda CSS's dealbreaker](https://www.joshwcomeau.com/react/css-in-rsc/#panda-css-8)[^1]
+[^1]: (번역자 주) 이 부분은 원문으로 연결합니다.
+
+### Pigment CSS
+
+가장 인기 있는 React 컴포넌트 라이브러리 중 하나인 [Material UI](https://mui.com/material-ui/)는 Emotion 위에 구축되었습니다. 개발팀은 RSC 호환성과 관련된 모든 동일한 문제와 씨름해 왔으며, 이에 대해 무언가를 하기로 결정했습니다.
+
+최근 새로운 라이브러리를 오픈소스화했습니다. [Pigment CSS](https://github.com/mui/material-ui/tree/master/packages/pigment-css-react)라는 이름의 라이브러리입니다. 이쯤 되면 API가 꽤 익숙해 보일 것입니다:
+
+```jsx
+import { styled } from '@pigment-css/react';
+
+export default function Homepage() {
+  return (
+    <BigRedButton>
+      Click me!
+    </BigRedButton>
+  );
+}
+
+const BigRedButton = styled.button`
+  font-size: 2rem;
+  color: red;
+`;
+```
+
+Pigment CSS는 컴파일 시 실행되며, Linaria와 동일한 전략을 사용하여 CSS Modules로 컴파일합니다. Next.js와 Vite용 플러그인이 있습니다.
+
+사실 이 플러그인은 [WyW-in-JS](https://github.com/Anber/wyw-in-js)("What you Want in JS")라는 저수준 도구를 사용합니다. 이 도구는 Linaria 코드베이스에서 발전한 것으로, "CSS Modules로 컴파일" 비즈니스 로직을 분리하고 이를 일반화하여 Pigment CSS와 같은 라이브러리가 그 위에 자체 API를 구축할 수 있도록 합니다.
+
+솔직히 제게는 이것이 완벽한 해결책처럼 느껴집니다. CSS Modules는 이미 수많은 테스트를 거쳤고 최적화도 많이 되어 있습니다. 그리고 지금까지 살펴본 바로는 Pigment CSS는 뛰어난 성능과 DX를 갖춘 멋진 제품입니다.
+
+Material UI의 다음 주요 버전에서는 Pigment CSS를 지원할 예정이며, 궁극적으로는 Emotion/styled-components에 대한 지원을 완전히 중단할 계획입니다. 그 결과, Pigment CSS는 가장 널리 사용되는 CSS-in-JS 라이브러리 중 하나가 될 것입니다. Material UI는 NPM에서 매주 약 5백만 번 다운로드되며, 이는 React의 1/5 수준입니다!
+
+아직은 매우 초기 단계입니다. Pigment CSS는 몇 주 전에야 오픈소스화되었습니다. 하지만 팀은 이 프로젝트에 상당한 리소스를 투입하고 있습니다. 앞으로 어떻게 발전할지 기대가 됩니다!
+
+### The list goes on
+
+지금까지 살펴본 라이브러리 외에도 생태계에는 흥미로운 일을 하고 있는 더 많은 프로젝트가 있습니다. 제가 주목하고 있는 몇 가지 프로젝트를 소개해드리겠습니다:
+
+- [next-yak](https://github.com/jantimon/next-yak) - 스위스 최대 전자상거래 소매업체의 개발자들이 만든 next-yak은 컴파일 타임 CSS-in-JS 라이브러리로, styled-components의 drop-in 대체에 최대한 근접하는 것을 목표로 하며 많은 보조 API를 재구현합니다.
+
+- [Kuma UI](https://github.com/kuma-ui/kuma-ui) - 이 라이브러리는 대부분의 스타일을 컴파일 타임에 추출하지만 런타임은 클라이언트 컴포넌트에서 사용할 수 있는 "하이브리드" 디자인을 시도하고 있습니다.
+
+- [Parcel macros](https://twitter.com/devongovett/status/1767939537907462211) - Parcel은 컴파일 타임 CSS-in-JS 라이브러리를 포함하여 모든 종류의 것을 빌드하는 데 사용할 수 있는 도구인 "macros"를 최근에 구현한 번들러입니다. 놀랍게도 이 기능은 Parcel에만 국한되지 않고 Next.js와 함께 사용할 수 있습니다!
+
+## 앞으로 나아갈 길
+
+자, 우리는 다양한 옵션을 살펴봤지만 여전히 질문은 남아 있습니다: "레거시" CSS-in-JS 라이브러리를 사용하는 프로덕션 애플리케이션이 있는 경우 **실제로 무엇을 해야 할까요?**
+
+약간 직관적이지 않지만 대부분의 경우, 실제로는 아무것도 할 필요가 없다고 생각합니다. 😅
+
+온라인의 많은 토론에서는 최신 React/Next.js 애플리케이션에서 styled-components를 사용할 수 없거나 그렇게 하면, 성능에 큰 불이익이 있는 것처럼 들리기도 합니다. **하지만 실제로는 그렇지 않습니다.**
+
+많은 사람들이 RSC(React 서버 컴포넌트)와 SSR(서버 사이드 렌더링)을 혼동하고 있습니다. 서버 측 렌더링은 여전히 기존과 똑같은 방식으로 작동하며, 이런 것들에 영향을 받지 않습니다. Next’s App Router나 다른 RSC 구현으로 마이그레이션해도 애플리케이션 속도가 느려지지는 않습니다. 사실 좀 더 빨라질 수도 있습니다!
+
+성능 측면에서 RSC 및 제로 런타임 CSS 라이브러리의 주요 이점은 TTI, 즉 "Time To Interactive"입니다. 이는 사용자에게 표시되는 UI와 완전한 인터랙티브 UI 사이의 지연 시간입니다. 이를 무시하면 사용자 경험에 좋지 않은 결과를 초래할 수 있습니다. 사람들은 작동할 것으로 예상하고 클릭을 시작하지만 애플리케이션이 아직 수화 중(hydrating)이기 때문에 아무 일도 일어나지 않습니다.
+
+따라서 애플리케이션이 지금 당장 하이드레이팅하는 데 시간이 오래 걸리는 경우 런타임이 없는 CSS 라이브러리로 마이그레이션하면 사용자 경험에 긍정적인 영향을 미칠 수 있습니다. 하지만 앱에 이미 견고한 TTI가 있는 경우에는 마이그레이션을 통해 사용자에게 어떤 이점도 제공되지 않을 수 있습니다.
+
+**많은 경우 가장 큰 문제는 FOMO[^2]라고 생각합니다.** 개발자로서 우리는 최신의 최고의 도구를 사용하기를 원합니다. 새로운 최적화를 통해 얻을 수 있는 이점이 많지 않다는 것을 알면서도 `"use client"` 지시문을 많이 추가하는 것은 재미가 없습니다. 하지만 이것이 정말 대규모 마이그레이션을 해야 하는 설득력 있는 이유일까요?
+
+[^2]:FOMO(fearing of missing out, 유행에 뒤쳐지는 것에 대한 공포심리, 소외되는 것에 대한 불안감) 증후군이다.
+
+### 제가 하고 있는 것
+
+저는 두 가지 기본 프로덕션 애플리케이션을 유지 관리합니다: 
+이 블로그와 인터랙티브 강좌([CSS for JavaScript Developers](https://css-for-js.dev/) 와 [The Joy of React](https://joyofreact.com/))에 사용하는 강좌 플랫폼입니다.
+
+제 코스 플랫폼은 여전히 styled-components와 함께 Next.js Pages Router를 사용하고 있으며, 조만간 마이그레이션할 계획은 없습니다. 이 라우터가 제공하는 사용자 경험에 만족하고 있으며 마이그레이션해도 성능에 큰 이점이 없다고 생각합니다.
+
+제 블로그도 현재 styled-components와 함께 Next.js Pages Router를 사용하고 있지만, Next.js App Router를 사용하도록 마이그레이션하는 중입니다. 적어도 지금은 [Linaria](https://github.com/callstack/linaria) + [next-with-linaria](https://github.com/dlehmhus/next-with-linaria)를 사용하기로 했습니다. Pigment CSS가 좀 더 성숙해지면 전환할 계획입니다.
+
+리액트 서버 컴포넌트는 정말 멋집니다. React/Vercel 팀은 서버에서 React가 작동하는 방식을 다시 생각하는 놀라운 일을 해냈습니다. 하지만 솔직히 이러한 마이그레이션을 직접 해본 결과, 대부분의 프로덕션 애플리케이션에 이 방법을 추천하고 싶은지는 잘 모르겠습니다. App Router가 "안정적(stable)"으로 표시되긴 했지만, 아직 Pages Router만큼 성숙하지 않았고 여전히 거친 부분이 있습니다.
+
+애플리케이션의 성능에 만족하신다면 ❤️ 업데이트/마이그레이션에 대해 급하게 생각하지 않으셔도 될 것 같습니다. 현재 스택은 계속 정상적으로 작동할 것이며, 몇 년 후에 다시 돌아와서 어떤 상황인지 확인할 수 있습니다.
+
+<pre><code className="plain-text">
+**The Joy of React**
+
+저는 거의 10년 동안 React를 사용해 왔으며, 동적 웹 애플리케이션을 구축하는 데 있어 가장 좋아하는 방법입니다. 저는 몇 년 동안 제가 아는 모든 것을 정리하여 [The Joy of React](https://joyofreact.com/)라는 대화형 자기 주도형 강좌를 만들었습니다.
+
+이 강좌에서는 React가 어떻게 작동하는지에 대한 정신적 모델을 구축하고, 제가 React로 생산성을 높이는 데 도움이 된 '행복한 관행'을 공유합니다. 이 강좌에서는 서스펜스 및 스트리밍 서버 사이드 렌더링과 같은 다른 최신 기능과 함께 React 서버 컴포넌트와 Next.js 앱 라우터에 대해서도 심도 있게 다룹니다.
+
+자세한 내용은 여기에서 확인할 수 있습니다:
+
+[The Joy of React](https://joyofreact.com/)
+</code></pre>
