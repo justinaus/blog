@@ -1,4 +1,3 @@
-
 .markdown-body,
 [data-theme="light"] {
   /*light*/
@@ -116,7 +115,8 @@
 
 .markdown-body b,
 .markdown-body strong {
-  font-weight: var(--base-text-weight-semibold, 600);
+  /* font-weight: var(--base-text-weight-semibold, 600); */
+  font-weight: var(--base-text-weight-bold, 700);
 }
 
 .markdown-body dfn {
@@ -490,7 +490,8 @@
 .markdown-body pre,
 .markdown-body details {
   margin-top: 0;
-  margin-bottom: 16px;
+  /* margin-bottom: 16px; */
+  margin-bottom: 32px;
 }
 
 .markdown-body blockquote>:first-child {
@@ -609,7 +610,8 @@
 }
 
 .markdown-body li>p {
-  margin-top: 16px;
+  /* margin-top: 16px; */
+  margin-top: 32px;
 }
 
 .markdown-body li+li {
