@@ -1,6 +1,11 @@
 @import 'reset.css';
 @import 'github-markdown.css';
 
+:root {
+  --color-mint: #b2fce4;
+  --color-mint-soft: #e6f9f4;
+}
+
 /* reset */
 hr {
   margin-block-start: 0;
@@ -36,6 +41,7 @@ hr {
 .markdown-body h1 {
   font-weight: 900;
   letter-spacing: -0.5px;
+  color: var(--mantine-primary-color-filled);
 }
 
 .markdown-body h2 {
@@ -49,4 +55,8 @@ hr {
 
 .markdown-body h4, h5, h6 {
   font-weight: 600;
+}
+
+.markdown-body pre {
+  background-color: var(--color-mint-soft);
 }
