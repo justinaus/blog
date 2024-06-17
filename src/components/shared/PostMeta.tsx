@@ -1,6 +1,5 @@
 import { Flex, Stack, StackProps, Text } from '@mantine/core';
 import { format } from 'date-fns';
-import Link from 'next/link';
 import { useMemo } from 'react';
 
 export default function PostMeta({
@@ -36,11 +35,11 @@ function Source({ text, url }: { text?: string; url: string }) {
       <Text size="sm" c="dark">
         원문 🔗:{' '}
       </Text>
-      <Link href={url} target="_blank">
+      <a href={url} target="_blank" rel="noopener">
         <Text size="xl" td={'underline'} c="blue" fw={'900'}>
           {text || url}
         </Text>
-      </Link>
+      </a>
     </Flex>
   );
 }

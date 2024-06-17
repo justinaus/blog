@@ -7,7 +7,7 @@ import MdxContent from './content.mdx';
 export default function UiComposition() {
   return (
     <PostPageLayout>
-      <PostMeta pt={'md'}>
+      <PostMeta>
         <PostMeta.DateText dateStringYYYYMMDD="2024-04-15" />
         <PostMeta.Source
           url="https://joshwcomeau.com/react/css-in-rsc/"

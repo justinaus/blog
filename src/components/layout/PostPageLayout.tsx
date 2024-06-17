@@ -39,7 +39,7 @@ export default function PostPageLayout({ children }: React.PropsWithChildren) {
       </AppShell.Header>
       {/* <AppShell.Navbar p="md">Navbar</AppShell.Navbar> */}
       <AppShell.Main>
-        <Container size={'sm'}>
+        <Container size={'sm'} pt={'md'} pb={'xl'}>
           <Stack gap="xl">{children}</Stack>
         </Container>
       </AppShell.Main>

@@ -7,7 +7,7 @@ import MdxContent from './content.mdx';
 export default function UiComposition() {
   return (
     <PostPageLayout>
-      <PostMeta pt={'md'}>
+      <PostMeta>
         <PostMeta.DateText dateStringYYYYMMDD="2023-10-03" />
         <PostMeta.Source
           url="https://kyleshevlin.com/ui-composition/"
