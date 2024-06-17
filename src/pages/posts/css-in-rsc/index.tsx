@@ -9,7 +9,10 @@ export default function UiComposition() {
     <PostPageLayout>
       <PostMeta pt={'md'}>
         <PostMeta.DateText dateStringYYYYMMDD="2024-04-15" />
-        <PostMeta.Source url="https://joshwcomeau.com/react/css-in-rsc/" />
+        <PostMeta.Source
+          url="https://joshwcomeau.com/react/css-in-rsc/"
+          text="joshwcomeau"
+        />
       </PostMeta>
       <MdxLayout>
         <MdxContent />

@@ -34,7 +34,7 @@ function Source({ text, url }: { text?: string; url: string }) {
   return (
     <Flex gap={'xs'} align={'center'} direction={'row'}>
       <Text size="sm" c="dark">
-        원문:{' '}
+        원문 🔗:{' '}
       </Text>
       <Link href={url} target="_blank">
         <Text size="xl" td={'underline'} c="blue" fw={'900'}>

@@ -9,7 +9,10 @@ export default function UiComposition() {
     <PostPageLayout>
       <PostMeta pt={'md'}>
         <PostMeta.DateText dateStringYYYYMMDD="2023-10-03" />
-        <PostMeta.Source url="https://kyleshevlin.com/ui-composition/" />
+        <PostMeta.Source
+          url="https://kyleshevlin.com/ui-composition/"
+          text="kyleshevlin"
+        />
       </PostMeta>
       <MdxLayout>
         <MdxContent />
