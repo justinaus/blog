@@ -1,21 +1,9 @@
-import { AppShell, Stack, Text } from '@mantine/core';
-import { format } from 'date-fns';
-import { useMemo } from 'react';
+import { AppShell, Avatar, Container, Flex, Stack } from '@mantine/core';
 
-type Props = {
-  date: string; // '2023-10-03', '2023-10-03T00:00:00.000Z'
-};
+import Logo from '../shared/Logo';
 
-export default function PostPageLayout({
-  date,
-  children,
-}: React.PropsWithChildren<Props>) {
+export default function PostPageLayout({ children }: React.PropsWithChildren) {
   // const [opened, { toggle }] = useDisclosure();
-
-  const dateText = useMemo(() => {
-    return format(new Date(date), 'MMMM dd, yyyy');
-  }, [date]);
-
   return (
     <AppShell
       header={{ height: 60 }}
@@ -25,28 +13,35 @@ export default function PostPageLayout({
       //   collapsed: { mobile: !opened },
       // }}
       // padding="md"
-      maw={'50rem'}
-      style={{
-        margin: '0 auto',
-      }}
+      // maw={'50rem'}
+      // style={{
+      //   margin: '0 auto',
+      // }}
     >
-      <AppShell.Header
-        px={'xl'}
-        maw={'50rem'}
-        bd={'none'}
-        style={{
-          margin: '0 auto',
-        }}
-      >
+      <AppShell.Header bd={'none'}>
+        <Container size={'sm'} h={'100%'}>
+          <Flex align={'center'} justify={'space-between'} h={'100%'}>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- 새로고침 */}
+            <a href="/">
+              <Logo />
+            </a>
+            <Avatar
+              component="a"
+              href="https://github.com/justinaus"
+              target="_blank"
+              src="https://github.com/justinaus.png"
+              alt="it's me"
+              size={'md'}
+            />
+          </Flex>
+        </Container>
         {/* <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" /> */}
-        <div>Logo</div>
       </AppShell.Header>
       {/* <AppShell.Navbar p="md">Navbar</AppShell.Navbar> */}
       <AppShell.Main>
-        <Stack gap="xl" p={'xl'}>
-          <Text>{dateText}</Text>
-          {children}
-        </Stack>
+        <Container size={'sm'}>
+          <Stack gap="xl">{children}</Stack>
+        </Container>
       </AppShell.Main>
     </AppShell>
   );

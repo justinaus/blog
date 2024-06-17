@@ -60,3 +60,39 @@ hr {
 .markdown-body pre {
   background-color: var(--color-mint-soft);
 }
+
+.logo {
+  font-size: 2rem;
+  letter-spacing: '-0.5px';
+  /* #8ac876
+#9ccc65
+#b2d672
+#b7db6e
+#a6d36e */
+/* #8cd9b8
+#77c4a3
+#62ae8e
+#4d9979
+#387f64 */
+  /* background: linear-gradient(45deg, #ff6b6b, #4ecdc4); */
+  background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  padding-left: 6px;
+  /* padding-right: 4px;
+  background-size: 200% 200%;
+  animation: gradientAnimation 3s ease infinite; */
+}
+
+/* @keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+} */
