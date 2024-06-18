@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://justinaus.vercel.app
+
+# Sitemaps
+Sitemap: https://justinaus.vercel.app/sitemap.xml
