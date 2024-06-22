@@ -1,9 +1,9 @@
 import { createTheme } from '@mantine/core';
 
 export const theme = createTheme({
-  primaryColor: 'blood-orange',
+  primaryColor: 'bloodOrange',
   colors: {
-    'blood-orange': [
+    bloodOrange: [
       '#FFE8E0',
       '#FFD0C2',
       '#FFB7A3',
@@ -15,5 +15,9 @@ export const theme = createTheme({
       '#CC2900',
       '#992000',
     ],
+  },
+  spacing: {
+    xxl: `calc(3rem* var(--mantine-scale))`,
+    xxs: `calc(0.2rem* var(--mantine-scale))`,
   },
 });
