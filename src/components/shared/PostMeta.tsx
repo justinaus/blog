@@ -7,7 +7,7 @@ export default function PostMeta({
   ...rest
 }: React.PropsWithChildren<StackProps>) {
   return (
-    <Stack gap={0} align="flex-end" {...rest}>
+    <Stack gap={'xxs'} align="flex-end" {...rest}>
       {children}
     </Stack>
   );

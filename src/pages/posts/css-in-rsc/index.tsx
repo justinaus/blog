@@ -1,10 +1,9 @@
 import { NextSeo } from 'next-seo';
 
 import MdxLayout from '@/components/layout/MdxLayout';
+import PostPageLayout from '@/components/layout/PostPageLayout';
 import PostMeta from '@/components/shared/PostMeta';
 import MdxContent from '@/contents/posts/css-in-rsc/content.mdx';
-
-import PostPageLayout from '../../../components/layout/PostPageLayout';
 
 export default function UiComposition() {
   return (
