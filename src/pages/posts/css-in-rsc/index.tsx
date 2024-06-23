@@ -1,9 +1,17 @@
+import dynamic from 'next/dynamic';
 import { NextSeo } from 'next-seo';
 
 import MdxLayout from '@/components/layout/MdxLayout';
 import PostPageLayout from '@/components/layout/PostPageLayout';
 import PostMeta from '@/components/shared/PostMeta';
 import MdxContent from '@/contents/posts/css-in-rsc/content.mdx';
+
+const DynamicUtterances = dynamic(
+  () => import('@/components/shared/Utterances'),
+  {
+    ssr: false,
+  },
+);
 
 export default function UiComposition() {
   return (
@@ -23,6 +31,7 @@ export default function UiComposition() {
         <MdxLayout>
           <MdxContent />
         </MdxLayout>
+        <DynamicUtterances />
       </PostPageLayout>
     </>
   );
