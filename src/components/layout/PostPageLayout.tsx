@@ -5,7 +5,7 @@ import PageLayout from './PageLayout';
 export default function PostPageLayout({ children }: React.PropsWithChildren) {
   return (
     <PageLayout>
-      <Container size={'sm'} pt={'md'} pb={'xl'} px={'xl'}>
+      <Container size={'sm'} pt={'md'} pb={'xxl'} px={'xl'}>
         <Stack gap="xxl">{children}</Stack>
       </Container>
     </PageLayout>

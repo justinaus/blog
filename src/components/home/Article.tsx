@@ -22,8 +22,7 @@ export default function Article({
   return (
     <Link href={href}>
       <Stack component={'article'} gap={'xs'}>
-        {/* <Title order={2} c={'gray.7'}> */}
-        <Title order={2} c={'bloodOrange.9'} size={'h3'} fw={800}>
+        <Title order={2} c={'bloodOrange.9'} size={'h3'} fw={900}>
           {title}
         </Title>
         <Text fw={300} c={'gray.8'}>
